@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>RSS Feed Reader</title>
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+
+  <!-- jQuery UI -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+  <!-- Lightbox2 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.7.1/css/lightbox.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.7.1/js/lightbox.min.js"></script>
+
+  <!-- jQuery Lazy -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazy/1.7.10/jquery.lazy.min.js"></script>
+
+  <style>
+    /* General page styling */
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef2f7;
+      padding: 20px;
+    }
+
+    /* Main header */
+    h1 {
+      text-align: center;
+      color: #0078d7;
+    }
+
+    /* Search box styling */
+    #search {
+      width: 95%;
+      max-width: 400px;
+      padding: 10px;
+      margin: 10px auto 20px auto;
+      display: block;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    /* Container for all feed items */
+    #feedContainer {
+      width: 90%;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Smaller, gray date line under each article */
+    .date {
+      font-size: 0.9em;
+      color: gray;
+    }
+
+    /* Images inside articles */
+    img {
+      max-width: 100%;
+      border-radius: 8px;
+      display: block;
+      margin: 10px 0;
+    }
+  </style>
+
+</head>
+<body>
+
+<h1>RSS Feed Reader</h1>
+
+<!-- Search box for filtering article titles/descriptions -->
+<input id="search" type="text" placeholder="Search articles…" />
+
+<!-- Feed container (accordion created here) -->
+<div id="feedContainer">
+  <p>Loading feed...</p>
+</div>
+
+<script>
+$(document).ready(function () {
+
+  /* AJAX request loads and parses the local RSS file
+   * dataType: "xml" → jQuery interprets it as an XML document */
+  $.ajax({
+    url: "myfeed.rss",      // RSS file in same folder
+    dataType: "xml",
+    success: function (data) {
+
+      // Clear the "Loading feed..." placeholder text
+      $("#feedContainer").empty();
+
+      // Loop through each <item> in the RSS XML
+      $(data).find("item").each(function () {
+
+        var $item = $(this);
+
+        // Extract fields from the item
+        var title = $item.find("title").first().text();
+        var description = $item.find("description").first().text();
+        var link = $item.find("link").first().text();
+        var pubDate = $item.find("pubDate").first().text();
+
+        /* image extraction logic
+         * RSS feed has
+         * <media:thumbnail>
+         * <media:content medium="image">
+         * some are namespaced and require nodeName checks*/
+        var imageUrl = null;
+
+        // Look for any tag whose name contains "thumbnail"
+        var thumb = $item.find("*").filter(function () {
+            return this.nodeName.toLowerCase().indexOf("thumbnail") !== -1;
+        });
+
+        // If found, extract the URL attribute
+        if (thumb.length > 0) {
+            imageUrl = $(thumb[0]).attr("url");
+        }
+
+        // Fallback: look for <media:content> where medium="image"
+        if (!imageUrl) {
+            var content = $item.find("*").filter(function () {
+                return this.nodeName.toLowerCase().indexOf("content") !== -1;
+            });
+
+            content.each(function () {
+                var med = $(this).attr("medium");
+                var typ = $(this).attr("type");
+
+                // If medium="image" OR type="image/jpeg", etc.
+                if (med === "image" || (typ && typ.indexOf("image") !== -1)) {
+                    imageUrl = $(this).attr("url");
+                }
+            });
+        }
+
+        // Final fallback: search inside <description> for inline <img>
+        if (!imageUrl) {
+          var match = description.match(/<img[^>]+src="([^"]+)"/i);
+          if (match) imageUrl = match[1];
+        }
+
+        /* constructing accordion section
+         * jQuery UI requires:
+         * <h3>HEADER</h3>
+         * <div>CONTENT</div> */
+        var headerHTML = "<h3>" + title + "</h3>";
+
+        var contentHTML = "<div>";
+
+        // If an image exists, wrap it in Lightbox-enabled link
+        if (imageUrl) {
+          contentHTML +=
+            "<a href='" + imageUrl + "' data-lightbox='feed'>" +
+              "<img class='lazy' data-src='" + imageUrl + "'>" +
+            "</a>";
+        }
+
+        // Story description
+        contentHTML += "<p>" + description + "</p>";
+
+        // Publication date
+        contentHTML += "<p class='date'>" + pubDate + "</p>";
+
+        // Link to full article
+        contentHTML += "<a href='" + link + "' target='_blank'>Read full story</a>";
+
+        contentHTML += "</div>";
+
+        // Append header + content pair to feed container
+        $("#feedContainer").append(headerHTML + contentHTML);
+
+      });
+
+      /* jQuery UI Accordion
+       * - collapsible: allows all sections to close
+       * - active: false → everything starts collapsed
+       * - heightStyle: expands height based on content */
+      $("#feedContainer").accordion({
+        collapsible: true,
+        active: false,
+        heightStyle: "content"
+      });
+
+      /* Initialize Lazy Loading for images
+       * - looks for <img class="lazy" data-src="..."> */
+      $("img.lazy").Lazy();
+    },
+
+    /* Error handler for failed RSS loading */
+    error: function (xhr, status, error) {
+      $("#feedContainer").html("<p style='color:red;'>Error loading RSS file: " + error + "</p>");
+    }
+  });
+
+  /* Search function
+   * Filters both <h3> and its following <div>
+   * using the combined text of article title & article description */
+  $("#search").on("keyup", function () {
+    var value = $(this).val().toLowerCase();
+
+    $("#feedContainer h3").each(function () {
+
+      var header = $(this);
+      var content = $(this).next("div");
+
+      // Combine text from title + description
+      var combined = header.text().toLowerCase() +
+                     content.text().toLowerCase();
+
+      // Determine visibility match
+      var match = combined.indexOf(value) !== -1;
+
+      // Show/hide both header and body
+      header.toggle(match);
+      content.toggle(match);
+    });
+  });
+
+});
+</script>
+
+</body>
+</html>
