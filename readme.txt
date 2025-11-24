@@ -14,4 +14,4 @@ Extra Features:
 - Clean layout with professional styling.
 
 URL:
-[Add your hosted link here if deployed on GitHub Pages or your school server]
+https://smp4228-cell.github.io/RSS/
