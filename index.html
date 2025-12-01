@@ -21,17 +21,31 @@
   <style>
     /* General page styling */
     body {
-    font-family: Arial, sans-serif;
+      font-family: Arial, sans-serif;
+  
+      /* Full-screen GitHub-hosted background image */
+      background: url("https://github.com/smp4228-cell/RSS/blob/main/RSSbackground.jpg?raw=true")
+                  no-repeat center center fixed;
+      background-size: cover;  /* fills entire screen */
+  
+      padding: 20px;
+      color: white;
+    }
 
-    /* Full-screen background image */
-    background: url("https://github.com/smp4228-cell/RSS/blob/main/RSSbackground.png?raw=true") 
-                no-repeat center center fixed;
-    background-size: cover;  /* fill the full window */
-
-    /* Padding for page content */
-    padding: 20px;
-    color: white;
-}
+    /* Readability overlay */
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0; 
+        left: 0;
+        width: 100vw; 
+        height: 100vh;
+    
+        /* A dark transparent overlay so text pops */
+        background: rgba(0, 0, 0, 0.45);  
+        z-index: -1;  /* stays behind all content */
+    }
+    
 
     /* Main header */
     h1 {
@@ -231,5 +245,6 @@ $(document).ready(function () {
 
 </body>
 </html>
+
 
 
