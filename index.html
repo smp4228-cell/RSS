@@ -23,16 +23,16 @@
     body {
       font-family: Arial, sans-serif;
   
-      /* Full-screen GitHub-hosted background image */
-      background: url("https://github.com/smp4228-cell/RSS/blob/main/RSSbackground.jpg?raw=true")
+      /* Full-screen background image from GitHub RAW content */
+      background: url("https://raw.githubusercontent.com/smp4228-cell/RSS/main/RSSbackground.jpg")
                   no-repeat center center fixed;
-      background-size: cover;  /* fills entire screen */
+      background-size: cover;
   
       padding: 20px;
       color: white;
     }
 
-    /* Readability overlay */
+    /* Dark overlay so text is readable */
     body::before {
         content: "";
         position: fixed;
@@ -40,11 +40,10 @@
         left: 0;
         width: 100vw; 
         height: 100vh;
-    
-        /* A dark transparent overlay so text pops */
-        background: rgba(0, 0, 0, 0.45);  
-        z-index: -1;  /* stays behind all content */
+        background: rgba(0, 0, 0, 0.45);
+        z-index: -1;
     }
+
     
 
     /* Main header */
@@ -245,6 +244,7 @@ $(document).ready(function () {
 
 </body>
 </html>
+
 
 
 
